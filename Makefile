@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------
 
 PACKAGE := htcondor-ce
-VERSION := 5.0.0
+VERSION := 5.1.6
 
 
 # ------------------------------------------------------------------------------
@@ -78,8 +78,6 @@ CLIENT_DEFAULT_MAP_FILES := \
 # Compute Entrypoint files
 # ------------------------------------------------------------------------------
 
-CE_PYTHON_FILES         := src/htcondorce/audit_payloads.py
-
 CE_SYSCONFIG_FILES	:= config/condor-ce
 
 CE_TMPFILE_FILES	:= config/condor-ce.conf
@@ -99,7 +97,7 @@ CE_SHARE_FILES := \
 	src/condor_ce_router_defaults \
 	src/gratia_cleanup.py \
 	src/local-wrapper \
-	contrib/apelscripts/condor_batch_blah.sh \
+	contrib/apelscripts/condor_batch_blah.py \
 	contrib/apelscripts/condor_ce_apel.sh \
 	contrib/bdii/htcondor-ce-provider \
 	contrib/bosco/bosco-cluster-remote-hosts.py \
@@ -317,7 +315,6 @@ entrypoint: client _view
 
 	install -p -m 0644 -D -t $(DESTDIR)/$(INSTALL_SHARE_DIR)/condor-ce/apel		$(CE_APEL_README_FILES)
 	install -p -m 0644 -D -t $(DESTDIR)/$(INSTALL_SHARE_DIR)/condor-ce/config.d/	$(CE_DEFAULT_CONFIG_FILES)
-	install -p -m 0644 -D -t $(DESTDIR)/$(INSTALL_PYTHON_DIR)/htcondorce/		$(CE_PYTHON_FILES)
 
 	install -p -m 0644 -D -t $(DESTDIR)/$(INSTALL_LIB_DIR)/systemd/system/		$(CE_SERVICE_FILES)
 	install -p -m 0644 -D -t $(DESTDIR)/$(INSTALL_LIB_DIR)/tmpfiles.d/		$(CE_TMPFILE_FILES)

@@ -2,7 +2,7 @@
 #define gitrev osg
 
 Name: htcondor-ce
-Version: 5.1.2
+Version: 5.1.6
 Release: 1%{?gitrev:.%{gitrev}git}%{?dist}
 Summary: A framework to run HTCondor as a CE
 BuildArch: noarch
@@ -28,7 +28,9 @@ BuildRequires: python3-rpm-macros
 # Mapfiles.d changes require 8.9.13 but 8.9.13 has known bugs
 # affecting the Job Router and Python 3 collector plugin
 # https://opensciencegrid.atlassian.net/browse/HTCONDOR-244
-Requires:  condor >= 9.0.0
+# Need 9.0.1 for the C++ collector plugin
+# https://opensciencegrid.atlassian.net/browse/HTCONDOR-1326
+Requires:  condor >= 9.0.1
 
 # Init script doesn't function without `which` (which is no longer part of RHEL7 base).
 Requires: which
@@ -87,7 +89,12 @@ Requires: python3-rrdtool
 Requires: python36-flask
 Requires: python36-gunicorn
 Requires: python36-rpm
+%if 0%{?osg}
+# osg has built python3-rrdtool for EL7
+Requires: python3-rrdtool
+%else
 Requires: rrdtool
+%endif
 %endif
 
 %description view
@@ -212,7 +219,7 @@ rm -f $RPM_BUILD_ROOT%{_datadir}/condor-ce/apel/README.md
 rm -f $RPM_BUILD_ROOT%{_sysconfdir}/condor/config.d/50-condor-apel.conf
 rm -f $RPM_BUILD_ROOT%{_sysconfdir}/condor-ce/config.d/50-ce-apel.conf
 rm -f $RPM_BUILD_ROOT%{_datadir}/condor-ce/config.d/50-ce-apel-defaults.conf
-rm -f $RPM_BUILD_ROOT%{_datadir}/condor-ce/condor_batch_blah.sh
+rm -f $RPM_BUILD_ROOT%{_datadir}/condor-ce/condor_batch_blah.py
 rm -f $RPM_BUILD_ROOT%{_datadir}/condor-ce/condor_ce_apel.sh
 rm -f $RPM_BUILD_ROOT%{_unitdir}/condor-ce-apel.service
 rm -f $RPM_BUILD_ROOT%{_unitdir}/condor-ce-apel.timer
@@ -326,9 +333,6 @@ fi
 
 %{_datadir}/condor-ce/local-wrapper
 
-%{python3_sitelib}/htcondorce/audit_payloads.py
-%{python3_sitelib}/htcondorce/__pycache__/audit_payloads.*.pyc
-
 %{_bindir}/condor_ce_host_network_check
 %{_bindir}/condor_ce_register
 
@@ -350,7 +354,10 @@ fi
 
 %files apel
 %{_datadir}/condor-ce/apel/README.md
-%{_datadir}/condor-ce/condor_batch_blah.sh
+%{_datadir}/condor-ce/condor_batch_blah.py
+%if 0%{?rhel} < 8
+%{_datadir}/condor-ce/__pycache__/condor_batch_blah.*.pyc
+%endif
 %{_datadir}/condor-ce/condor_ce_apel.sh
 %{_datadir}/condor-ce/config.d/50-ce-apel-defaults.conf
 %{_sysconfdir}/condor/config.d/50-condor-apel.conf
@@ -551,6 +558,30 @@ fi
 %{_localstatedir}/www/wsgi-scripts/htcondor-ce/htcondor-ce-registry.wsgi
 
 %changelog
+* Wed Oct 05 2022 Tim Theisen <tim@cs.wisc.edu> - 5.1.6-1
+- HTCondor-CE now uses the C++ Collector plugin for payload job traceability
+- Fix HTCondor-CE mapfiles to be compliant with PCRE2 and HTCondor 9.10.0+
+- Add support for multiple APEL accounting scaling factors
+- Suppress spurious log message about a missing negotiator
+- Fix crash in HTCondor-CE View
+
+* Fri Jun 03 2022 Tim Theisen <tim@cs.wisc.edu> - 5.1.5-1
+- Rename AuthToken attributes in the routed job to better support accounting
+- Prevent GSI environment from pointing the job to the wrong certificates
+- Fix issue where HTCondor-CE would need port 9618 open to start up
+
+* Thu Mar 24 2022 Tim Theisen <tim@cs.wisc.edu> - 5.1.4-1
+- Fix whole node job glidein CPUs and GPUs expressions that caused held jobs
+- Fix bug where default CERequirements were being ignored
+- Pass whole node request from GlideinWMS to the batch system
+- Since CentOS 8 has reached end of life, we build and test on Rocky Linux 8
+
+* Tue Dec 21 2021 Tim Theisen <tim@cs.wisc.edu> - 5.1.3-1
+- The HTCondor-CE central collector requires SSL credentials from client CEs
+- Fix BDII crash if an HTCondor Access Point is not available
+- Fix formatting of APEL records that contain huge values
+- HTCondor-CE client mapfiles are not installed on the central collector
+
 * Wed Sep 22 2021 Tim Theisen <tim@cs.wisc.edu> - 5.1.2-1
 - Fixed the default memory and CPU requests when using job router transforms
 - Apply default MaxJobs and MaxJobsIdle when using job router transforms
